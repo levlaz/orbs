@@ -61,17 +61,53 @@ git push origin v1.0.0
 ```
 
 Only the orb whose directory changed on that tagged commit is published.
-A CircleCI **context** named `orb-publishing` is expected to provide
-`CIRCLE_TOKEN` with `write` permission on your namespace.
+The namespace is **`levlaz`**.
+
+## Secrets (1Password)
+
+Both local and CI flows pull secrets from the **`devops`** vault in
+1Password, item **`levlaz-ci`**. The only secret stored directly in
+CircleCI is the bootstrap `OP_SERVICE_ACCOUNT_TOKEN`; everything else
+(`CIRCLE_TOKEN`, `GITHUB_TOKEN`) is fetched at job-time via the
+[`onepassword/secrets`](https://circleci.com/developer/orbs/orb/onepassword/secrets)
+orb.
+
+References live in [`.env.1password`](./.env.1password) (safe to commit —
+these are references, not values).
+
+### Local
+
+Prereqs: [`op` CLI](https://developer.1password.com/docs/cli/get-started/)
+signed in with access to the `devops` vault.
+
+```bash
+# Run any command with secrets injected from 1Password:
+./scripts/with-secrets.sh circleci orb publish ...
+
+# Or drop into a shell that has CIRCLE_TOKEN / GITHUB_TOKEN set:
+./scripts/with-secrets.sh bash
+```
+
+Under the hood this is just `op run --env-file=.env.1password -- <cmd>`.
+
+### CI
+
+One-time setup in CircleCI:
+
+1. Create a 1Password [Service Account](https://developer.1password.com/docs/service-accounts/)
+   with read access to the `devops` vault.
+2. Create a CircleCI **context** named `orb-publishing` and add a single
+   env var: `OP_SERVICE_ACCOUNT_TOKEN` = the service-account token.
+
+At job time, the publish step's `pre-steps` install `op` and export
+`CIRCLE_TOKEN` + `GITHUB_TOKEN` from the vault into the job env before
+`orb-tools/publish` runs.
 
 ## Before you push
 
-- [ ] Replace `<namespace>` in `.circleci/continue-config.yml` with your
-  CircleCI orb namespace (run `circleci namespace create <name> github <org>` if
-  you don't have one yet).
-- [ ] Claim each new orb once with `circleci orb create <namespace>/<orb-name>`.
-- [ ] Create the `orb-publishing` context in the CircleCI UI and attach a
-  `CIRCLE_TOKEN` env var.
+- [ ] Claim each new orb once: `circleci orb create levlaz/<orb-name>`.
+- [ ] Create the `orb-publishing` context in CircleCI with
+  `OP_SERVICE_ACCOUNT_TOKEN`.
 
 ## References
 

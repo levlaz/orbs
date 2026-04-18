@@ -19,6 +19,7 @@ version: 2.1
 orbs:
   orb-tools: circleci/orb-tools@12.3
   shellcheck: circleci/shellcheck@3.2
+  onepassword: onepassword/secrets@1.0.0
 
 parameters:
   run-hello:
@@ -61,9 +62,21 @@ workflows:
           filters: *filters
       - orb-tools/publish:
           name: hello-publish
-          orb_name: <namespace>/hello
+          orb_name: levlaz/hello
           vcs_type: << pipeline.project.type >>
           pub_type: production
+          # pre-steps install the 1Password CLI and export CIRCLE_TOKEN /
+          # GITHUB_TOKEN from the devops vault *before* orb-tools/publish
+          # runs, so the only secret we store in CircleCI is the bootstrap
+          # OP_SERVICE_ACCOUNT_TOKEN (in the `orb-publishing` context).
+          pre-steps:
+            - onepassword/install-cli
+            - onepassword/export:
+                secret-reference: op://devops/levlaz-ci/CIRCLE_TOKEN
+                var-name: CIRCLE_TOKEN
+            - onepassword/export:
+                secret-reference: op://devops/levlaz-ci/GITHUB_TOKEN
+                var-name: GITHUB_TOKEN
           requires:
             - hello-lint
             - hello-pack
