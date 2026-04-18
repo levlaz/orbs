@@ -1,0 +1,32 @@
+version: 2.1
+
+# Setup pipeline — runs first on every commit. Inspects the diff and sets
+# a boolean pipeline parameter per orb directory that changed, then
+# continues to .circleci/continue-config.yml with those parameters.
+#
+# To add a new orb to the build:
+#   1. Create its directory under orbs/<name>/
+#   2. Add a `run-<name>` line to `mapping` below
+#   3. Add a `run-<name>` parameter + workflow block in continue-config.yml
+
+setup: true
+
+orbs:
+  path-filtering: circleci/path-filtering@2.0.3
+
+workflows:
+  detect-changes:
+    jobs:
+      - path-filtering/filter:
+          name: detect-changed-orbs
+          base-revision: main
+          config-path: .circleci/continue-config.yml
+          # Format per line: <path-regex> <pipeline-param> <value>
+          # Each line sets the pipeline param to the given value if any
+          # changed file matches the regex. Shared files (pipeline configs,
+          # linter config, helper scripts) trigger every orb so changes to
+          # common infrastructure are always validated.
+          mapping: |
+            orbs/hello/.* run-hello true
+            \.circleci/.* run-hello true
+            \.yamllint run-hello true

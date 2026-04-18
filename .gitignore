@@ -1,0 +1,8 @@
+# Packed orb artifacts — produced by `circleci orb pack` / orb-tools.
+# Never commit; they are generated from src/ during the pipeline.
+orb.yml
+**/orb.yml
+
+# OS
+.DS_Store
+Thumbs.db

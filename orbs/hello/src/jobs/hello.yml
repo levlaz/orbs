@@ -1,0 +1,15 @@
+description: >
+  Check out the project and greet the given recipient.
+
+executor: default
+
+parameters:
+  to:
+    type: string
+    default: "World"
+    description: "Hello to whom?"
+
+steps:
+  - checkout
+  - greet:
+      to: << parameters.to >>

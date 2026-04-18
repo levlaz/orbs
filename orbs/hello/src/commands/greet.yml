@@ -1,0 +1,15 @@
+description: >
+  Echo a greeting to the given recipient.
+
+parameters:
+  to:
+    type: string
+    default: "World"
+    description: "Hello to whom?"
+
+steps:
+  - run:
+      environment:
+        PARAM_TO: <<parameters.to>>
+      name: Hello Greeting
+      command: <<include(scripts/greet.sh)>>

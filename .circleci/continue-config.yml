@@ -1,0 +1,73 @@
+version: 2.1
+
+# Continuation pipeline — invoked by the setup config in config.yml.
+# Each orb has:
+#   - a `run-<name>` boolean pipeline parameter (set by path-filtering)
+#   - a workflow gated on that parameter that lints, packs, reviews,
+#     shell-checks, and (on release tags) publishes.
+#
+# To onboard a new orb:
+#   1. Add a `run-<name>` parameter below (default false)
+#   2. Copy the `hello` workflow block and rename it, updating every
+#      reference to source_dir / orb_name / scripts dir / job names.
+#
+# To add per-orb integration tests that invoke the packed orb as a
+# dependency (e.g. run `<orb>/<command>` in a real job), chain a third
+# pipeline via `orb-tools/continue` — see the upstream Orb-Template's
+# test-deploy.yml for an example.
+
+orbs:
+  orb-tools: circleci/orb-tools@12.3
+  shellcheck: circleci/shellcheck@3.2
+
+parameters:
+  run-hello:
+    type: boolean
+    default: false
+
+# Run test jobs on every push (including tag pushes).
+filters: &filters
+  tags:
+    only: /.*/
+
+# Only run publish jobs on v*.*.* tag pushes.
+release-filters: &release-filters
+  branches:
+    ignore: /.*/
+  tags:
+    only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
+
+workflows:
+  # ─── hello ────────────────────────────────────────────────────────────
+  hello:
+    when: << pipeline.parameters.run-hello >>
+    jobs:
+      - orb-tools/lint:
+          name: hello-lint
+          source_dir: orbs/hello/src
+          filters: *filters
+      - orb-tools/pack:
+          name: hello-pack
+          source_dir: orbs/hello/src
+          filters: *filters
+      - orb-tools/review:
+          name: hello-review
+          source_dir: orbs/hello/src
+          orb_name: hello
+          filters: *filters
+      - shellcheck/check:
+          name: hello-shellcheck
+          dir: orbs/hello/src/scripts
+          filters: *filters
+      - orb-tools/publish:
+          name: hello-publish
+          orb_name: <namespace>/hello
+          vcs_type: << pipeline.project.type >>
+          pub_type: production
+          requires:
+            - hello-lint
+            - hello-pack
+            - hello-review
+            - hello-shellcheck
+          context: orb-publishing
+          filters: *release-filters

@@ -1,0 +1,9 @@
+version: 2.1
+
+description: >
+  A friendly "hello world" orb — the scaffold template for this monorepo.
+  Copy the orbs/hello directory to start a new orb.
+
+display:
+  home_url: "https://github.com/levlaz/orbs"
+  source_url: "https://github.com/levlaz/orbs/tree/main/orbs/hello"

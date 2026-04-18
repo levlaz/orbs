@@ -1,0 +1,12 @@
+description: >
+  Run the greet command against a named recipient.
+
+usage:
+  version: 2.1
+  orbs:
+    hello: levlaz/hello@1.0.0
+  workflows:
+    say-hello:
+      jobs:
+        - hello/hello:
+            to: "CircleCI"
